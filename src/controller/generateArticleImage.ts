@@ -2,13 +2,11 @@ import puppeteer from "puppeteer";
 import fetch from "node-fetch";
 import type { Request, Response } from "express";
 import { articleTemplate } from "../templates/articleTemplate";
-import { articleUrl } from "../constans/api";
+import { articleUrl } from "../constants/api";
 
 export const generateImage = async (req: Request, res: Response) => {
   console.log(articleUrl);
-  const articleRes = await fetch(
-    `${articleUrl}/slug/377159-parliament-chief-warn-central-bank-economy-ministry`
-  );
+  const articleRes = await fetch(`${articleUrl}/slug/377159-parliament-chief-warn-central-bank-economy-ministry`);
   const data = await articleRes.json();
 
   const templateData = {
