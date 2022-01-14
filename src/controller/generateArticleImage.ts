@@ -1,12 +1,22 @@
-import puppeteer from "puppeteer";
-import fetch from "node-fetch";
 import type { Request, Response } from "express";
-import { articleTemplate } from "../templates/articleTemplate";
+import fs from "fs/promises";
+import fetch from "node-fetch";
+import path from "path";
+import puppeteer from "puppeteer";
+import { client } from "../app";
 import { articleUrl } from "../constants/api";
+import { articleTemplate } from "../templates/articleTemplate";
 
 export const generateImage = async (req: Request, res: Response) => {
-  console.log(articleUrl);
-  const articleRes = await fetch(`${articleUrl}/slug/377159-parliament-chief-warn-central-bank-economy-ministry`);
+  const { category, slug } = req.params;
+
+  const url = await client.get(`${category}/${slug}`);
+  if (url) {
+    return res.redirect(url);
+  }
+
+  const articleRes = await fetch(`${articleUrl}/${category}/${slug}`);
+
   const data = await articleRes.json();
 
   const templateData = {
@@ -20,7 +30,7 @@ export const generateImage = async (req: Request, res: Response) => {
 
   const html = articleTemplate(templateData);
 
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ defaultViewport: { width: 1200, height: 627 } });
 
   // Create a new page
   const page = await browser.newPage();
@@ -31,9 +41,11 @@ export const generateImage = async (req: Request, res: Response) => {
   const screenshotBuffer = await page.screenshot({
     fullPage: false,
     type: "png",
-    path: "screenshot.png",
   });
+  await fs.writeFile(path.join(__dirname, "..", "..", "images", `${slug}.png`), screenshotBuffer, { flag: "w+" });
 
   await page.close();
-  res.send("ok");
+
+  client.set(`${category}/${slug}`, `/images/${slug}.png`);
+  res.redirect(`/images/${slug}.png`);
 };

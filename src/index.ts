@@ -1,20 +1,19 @@
-import express from "express";
 import dotenv from "dotenv";
-import { createClient } from "redis";
+import express from "express";
+import path from "path";
 
 const app = express();
 dotenv.config();
 
+import { client } from "./app";
 import { port } from "./constants/config";
 import ogImageRouter from "./routes/og-image";
 
+app.use("/images", express.static(path.join(__dirname, "..", "images")));
 app.use(ogImageRouter);
 
 (async () => {
   try {
-    const client = createClient({
-      url: `redis://${process.env.REDIS_USERNAME}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
-    });
     client.on("error", (err) => console.log("Redis Client Error", err));
     await client.connect();
 
